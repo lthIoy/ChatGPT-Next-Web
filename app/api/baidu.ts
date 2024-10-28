@@ -9,7 +9,6 @@ import { prettyObject } from "@/app/utils/format";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/api/auth";
 import { isModelAvailableInServer } from "@/app/utils/model";
-import { getAccessToken } from "@/app/utils/baidu";
 
 const serverConfig = getServerSideConfig();
 
@@ -30,7 +29,8 @@ export async function handle(
     });
   }
 
-  if (!serverConfig.baiduApiKey || !serverConfig.baiduSecretKey) {
+  //if (!serverConfig.baiduApiKey || !serverConfig.baiduSecretKey) {
+  if (!serverConfig.baiduApiKey) {
     return NextResponse.json(
       {
         error: true,
@@ -58,6 +58,7 @@ async function request(req: NextRequest) {
 
   let baseUrl = serverConfig.baiduUrl || BAIDU_BASE_URL;
 
+  baseUrl = "http://oneapi-test.wenzheer.cn/";
   if (!baseUrl.startsWith("http")) {
     baseUrl = `https://${baseUrl}`;
   }
@@ -65,6 +66,7 @@ async function request(req: NextRequest) {
   if (baseUrl.endsWith("/")) {
     baseUrl = baseUrl.slice(0, -1);
   }
+  path = "/v1/chat/completions";
 
   console.log("[Proxy] ", path);
   console.log("[Base Url]", baseUrl);
@@ -76,11 +78,12 @@ async function request(req: NextRequest) {
     10 * 60 * 1000,
   );
 
-  const { access_token } = await getAccessToken(
-    serverConfig.baiduApiKey as string,
-    serverConfig.baiduSecretKey as string,
-  );
-  const fetchUrl = `${baseUrl}${path}?access_token=${access_token}`;
+  // const { access_token } = await getAccessToken(
+  //   serverConfig.baiduApiKey as string,
+  //   serverConfig.baiduSecretKey as string,
+  // );
+  //const fetchUrl = `${baseUrl}${path}?access_token=${access_token}`;
+  const fetchUrl = `${baseUrl}${path}`;
 
   const fetchOptions: RequestInit = {
     headers: {
@@ -98,8 +101,7 @@ async function request(req: NextRequest) {
   if (serverConfig.customModels && req.body) {
     try {
       const clonedBody = await req.text();
-      fetchOptions.body = clonedBody;
-
+      //fetchOptions.body.model="ERNIE-3.5-8K"
       const jsonBody = JSON.parse(clonedBody) as { model?: string };
 
       // not undefined and is false
@@ -125,6 +127,8 @@ async function request(req: NextRequest) {
     }
   }
   try {
+    //fetchOptions.headers={}
+    //fetchOptions.headers["Authorization"]=`Bearer ${serverConfig.baiduApiKey}`
     const res = await fetch(fetchUrl, fetchOptions);
 
     // to prevent browser prompt for credentials

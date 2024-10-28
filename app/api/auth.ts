@@ -33,6 +33,7 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
   const hashedCode = md5.hash(accessCode ?? "").trim();
 
   const serverConfig = getServerSideConfig();
+
   console.log("[Auth] allowed hashed codes: ", [...serverConfig.codes]);
   console.log("[Auth] got access code:", accessCode);
   console.log("[Auth] hashed access code:", hashedCode);
@@ -103,7 +104,7 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
           systemApiKey = serverConfig.apiKey;
         }
     }
-
+    console.log(`systemApiKey:${systemApiKey}`);
     if (systemApiKey) {
       console.log("[Auth] use system api key");
       req.headers.set("Authorization", `Bearer ${systemApiKey}`);
